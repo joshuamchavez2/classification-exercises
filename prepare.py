@@ -9,6 +9,7 @@ import statistics
 import acquire
 from sklearn.model_selection import train_test_split
 from sklearn.impute import SimpleImputer
+from sklearn.impute import KNNImputer
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -117,11 +118,12 @@ def clean_titanic(df):
     and create dummy vars of sex and embark_town. 
     '''
     df.drop_duplicates(inplace=True)
-    df.drop(columns=['deck', 'embarked', 'class', 'age'], inplace=True)
+    df.drop(columns=['deck', 'embarked', 'class'], inplace=True)
     df.embark_town.fillna(value='Southampton', inplace=True)
     dummy_df = pd.get_dummies(df[['sex', 'embark_town']], drop_first=False)
     df = df.drop(columns=['passenger_id'])
     return pd.concat([df, dummy_df], axis=1)
+
 
 def split_titanic_data(df):
     """
@@ -136,6 +138,12 @@ def impute_mode(train, validate, test):
     '''
     impute mode for embark_town
     '''
+    
+    imputer = KNNImputer(n_neighbors=2)
+    train[['age']] = imputer.fit_transform(train[['age']])
+    validate[['age']] = imputer.fit_transform(validate[['age']])
+    test[['age']] = imputer.fit_transform(test[['age']])
+
     imputer = SimpleImputer(strategy='most_frequent')
     train[['embark_town']] = imputer.fit_transform(train[['embark_town']])
     validate[['embark_town']] = imputer.transform(validate[['embark_town']])
